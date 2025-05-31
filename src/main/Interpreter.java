@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import visual.composite.HandlePanel;
 import visual.frame.WindowFrame;
@@ -28,6 +29,8 @@ import visual.frame.WindowFrame;
  * overwriteOverlap function issue
  * 
  * TODO: Native means of transparent background so we don't rely on chroma key options?
+ * 
+ * TODO: Allow user to select Font customization (list of fonts to pick from, size, color, etc.)
  * 
  * @author Ada Reithger
  * 
@@ -95,13 +98,17 @@ public class Interpreter implements JavaReceiver {
 		InputStream is = null;
 		try {
 			is = Interpreter.class.getResourceAsStream(localPath);
+			if(is == null) {
+				is = Interpreter.class.getResourceAsStream(jarPath);
+			}
 		}
 		catch(Exception e) {
-			is = Interpreter.class.getResourceAsStream(jarPath);
+			e.printStackTrace();
 		}
 		try {
 			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(Font.createFont(Font.TRUETYPE_FONT, is));
 			usedFont = new Font("RuneScape UF", Font.BOLD, 36);
+			is.close();
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -159,12 +166,13 @@ public class Interpreter implements JavaReceiver {
 			StringBuilder sb = new StringBuilder();
 			
 			for(int i = prestige * DISPLAY_WORD_COUNT; i < text.size(); i++) {
-				sb.append(text.get(i) + " ");
+				sb.append(text.get(i).substring(0, 1).toUpperCase() + text.get(i).substring(1) + " ");
 			}
+			String display = sb.toString(); //.toUpperCase(Locale.CANADA);
 			hp.removeAllElements();
 			hp.addRectangle("rect", 3, "default", 0, 0, width, height, false, chroma, chroma);
 			//hp.handleText("text", "default", 5, width / 2, height / 2, width, height, usedFont, sb.toString());
-			hp.addText("text", 5, "default", width / 2, height / 2, width, height, sb.toString(), usedFont, false, false, true);
+			hp.addText("text", 5, "default", width / 2, height / 2, width, height, display, usedFont, false, false, true);
 		}
 		if(text.size() - (prestige * DISPLAY_WORD_COUNT) > DISPLAY_WORD_COUNT || counter != -1) {
 			counter = counter == -1 ? 0 : counter + 1;
@@ -211,6 +219,7 @@ public class Interpreter implements JavaReceiver {
 				if(i == other.length - 1) {
 					return true;
 				}
+				text = new ArrayList<String>(text.subList(0, text.size() - (other.length - (i + 2))));
 				for(int j = i + 1; j < other.length; j++) {
 					text.add(other[j]);
 				}

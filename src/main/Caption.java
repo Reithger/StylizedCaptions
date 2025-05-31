@@ -22,7 +22,7 @@ public class Caption {
 	public static void main(String[] args) {
 		Interpreter interp = new Interpreter(600, 125);
 		PythonFileValidation.verifyPythonFileNear("./captions", "voice-to-text.py", "../assets/voice-to-text.py", "/main/assets/voice-to-text.py");
-		JavaPythonSocket a = new JavaPythonSocket("./captions/voice-to-text.py", interp);
+		JavaPythonSocket a = new JavaPythonSocket("./captions/voice-to-text.py", 3500, interp);
 	}
 
 	
