@@ -5,8 +5,8 @@ import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Locale;
 
+import core.JavaReceiver;
 import visual.composite.HandlePanel;
 import visual.frame.WindowFrame;
 
@@ -24,10 +24,7 @@ import visual.frame.WindowFrame;
  * TODO: Need to overhaul SVI DrawnText to allow for a series of strings and Fonts to be
  * provided such that we can have alternate font stylings mid-string (so the most recent
  * addition to the caption can be colored differently).
- * 
- * TODO: Only obvious bug right now is the first string gets duplicated sometimes; probably
- * overwriteOverlap function issue
- * 
+
  * TODO: Native means of transparent background so we don't rely on chroma key options?
  * 
  * TODO: Allow user to select Font customization (list of fonts to pick from, size, color, etc.)
@@ -64,7 +61,7 @@ public class Interpreter implements JavaReceiver {
 	private volatile String lastText;
 	
 	private volatile int skipCounter;
-	private Font usedFont;
+	private volatile Font usedFont;
 	
 //---  Constructors   -------------------------------------------------------------------------
 	
@@ -84,7 +81,13 @@ public class Interpreter implements JavaReceiver {
 		wf.setName("Ada Captions");
 		chroma = chromaChoice;
 		wf.setBackgroundColor(chroma);
-		hp = new HandlePanel(0, 0, width, height);
+		hp = new HandlePanel(0, 0, width, height) {
+			private int counter;
+			@Override
+			public void clickReleaseEvent(int code, int x, int y, int type) {
+				usedFont = counter++ % 2 == 0 ? new Font("Sans Serif", Font.BOLD, 28) : new Font("RuneScape UF", Font.BOLD, 36);
+			}
+		};
 		wf.addPanel("panel", hp);
 		hp.addRectangle("rect", 3, "default", 0, 0, width, height, false, chroma, chroma);
 		counter = -1;
@@ -118,9 +121,9 @@ public class Interpreter implements JavaReceiver {
 
 	private void interpretNewVoice(String in) {
 		// The commented out code below was used to improve performance by stopping redundant interpretations
-		//if(lastText != null && lastText.equals(in)) {
-		//	return;
-		//}
+		if(lastText != null && lastText.equals(in) && !lastText.equals("")) {
+			return;
+		}
 		lastText = in;
 		// On first instance of text coming in, assign whatever we got to instantiate the text ArrayList
 		if(text == null) {
@@ -141,17 +144,7 @@ public class Interpreter implements JavaReceiver {
 			}
 			// If we're mid-sentence, figure out what the new text is to append to the text ArrayList
 			else if(!other[0].equals("")){
-				int index = text.size() - 1;
-				boolean found = findOverlapOverwrite(other, index);
-				// Keep searching back through the text ArrayList until you find a matching word (in case the STT corrected itself)
-				// Note: this is so we can differentiate the currently new text for denoting it
-				if(!found) {
-					while(index > 0 && !findOverlapOverwrite(other, index--)) {
-					}	
-					if(index <= 0) {
-						resetText(in);
-					}
-				}
+				resetText(in);
 			}		
 			// Go over the newest version of the input and replace the text ArrayList contents with any words that have been changed
 			if(!other[0].equals("")) {
@@ -184,7 +177,7 @@ public class Interpreter implements JavaReceiver {
 	}
 
 	@Override
-	public void receivePythonData(String arg0) {
+	public void receiveSocketData(String arg0) {
 		if(arg0.contains("partial") || arg0.contains("text")) {
 			skipCounter++;
 			if(skipCounter % INPUT_SKIP == 0) {
@@ -210,23 +203,6 @@ public class Interpreter implements JavaReceiver {
 			if(!s.equals(""))
 				text.add(s);
 		}
-	}
-	
-	private boolean findOverlapOverwrite(String[] other, int index) {
-		String key = text.get(index);
-		for(int i = other.length - 1; i >= 0; i--) {
-			if(other[i].equals(key)) {
-				if(i == other.length - 1) {
-					return true;
-				}
-				text = new ArrayList<String>(text.subList(0, text.size() - (other.length - (i + 2))));
-				for(int j = i + 1; j < other.length; j++) {
-					text.add(other[j]);
-				}
-				return true;
-			}
-		}
-		return false;
 	}
 
 }

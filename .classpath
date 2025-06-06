@@ -7,6 +7,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/SirBo/eclipse-workspace/StylizedCaptions/src/main/assets/JavaPythonSocketTalk.jar"/>
+	<classpathentry kind="lib" path="C:/Users/SirBo/eclipse-workspace/StylizedCaptions/src/main/assets/JavaSocketInterface.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

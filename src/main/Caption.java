@@ -1,5 +1,7 @@
 package main;
 
+import core.SocketControl;
+
 /**
  * 
  * This is a runner class for the StylizedCaptions project.
@@ -13,16 +15,26 @@ package main;
  * Font style in this version (will add options later) is the OSRS Runescape
  * font as found here: https://www.dafont.com/runescape-uf.font
  * 
- * Isn't working right now for some reason, will investigate
- * 
  */
 
 public class Caption {
 
 	public static void main(String[] args) {
 		Interpreter interp = new Interpreter(600, 125);
-		PythonFileValidation.verifyPythonFileNear("./captions", "voice-to-text.py", "../assets/voice-to-text.py", "/main/assets/voice-to-text.py");
-		JavaPythonSocket a = new JavaPythonSocket("./captions/voice-to-text.py", 3500, interp);
+		
+		SocketControl socket = new SocketControl();
+		
+		socket.createSocketInstance("text");
+		
+		socket.verifySubprogramReady("./captions", "voice-to-text.py", "../assets/voice-to-text.py", "/main/assets/voice-to-text.py");
+		
+		socket.setInstancePort("text", 3500);
+
+		socket.attachJavaReceiver("text", interp);
+		
+		socket.setInstanceSubprogramPython("text", "./captions/voice-to-text.py");
+		
+		socket.runSocketInstance("text");		
 	}
 
 	
