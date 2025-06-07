@@ -1,4 +1,4 @@
-package main;
+package view;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -6,45 +6,37 @@ import java.awt.GraphicsEnvironment;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import core.JavaReceiver;
+import control.Interpreter;
+import control.TextReceiver;
 import visual.composite.HandlePanel;
 import visual.frame.WindowFrame;
 
 /**
- * 
- * Messy and overloaded class that handles the logic of receiving the String input from
- * the called-upon Python program which interprets microphone audio into lingual text.
- * 
  * Class primarily serves to manage the graphical components of displaying the interpreted
  * lingual text using the Software Visual Interface library, as well as providing a means
  * to import novel font designs for use in the captions.
  * 
- * This class needs to be broken up into several others for ease of future development.
- * 
+ *
  * TODO: Need to overhaul SVI DrawnText to allow for a series of strings and Fonts to be
  * provided such that we can have alternate font stylings mid-string (so the most recent
  * addition to the caption can be colored differently).
 
  * TODO: Native means of transparent background so we don't rely on chroma key options?
  * 
- * TODO: Allow user to select Font customization (list of fonts to pick from, size, color, etc.)
- * 
- * @author Ada Reithger
  * 
  */
 
-public class Interpreter implements JavaReceiver {
-
-//---  Constant Values   ----------------------------------------------------------------------
+public class Display implements TextReceiver{
 	
+//---  Constant Values   ----------------------------------------------------------------------
+
 	private static final int DISPLAY_WORD_COUNT = 14;
 	private static final int OVERWRITE_DELAY = 5;
 	private static final Font DEFAULT_FONT = new Font("Sans Serif", Font.BOLD, 28);
 	private static final Color DEFAULT_CHROMA = new Color(0, 255, 0);
-	private static final int INPUT_SKIP = 1;
 	
 //---  Instance Variables   -------------------------------------------------------------------
-	
+
 	private int width;
 	private int height;
 	
@@ -60,17 +52,16 @@ public class Interpreter implements JavaReceiver {
 	private volatile ArrayList<String> text;
 	private volatile String lastText;
 	
-	private volatile int skipCounter;
 	private volatile Font usedFont;
-	
+		
 //---  Constructors   -------------------------------------------------------------------------
 	
-	public Interpreter(int wid, int hei) {
+	public Display(int wid, int hei) {
 		initiate(wid, hei, DEFAULT_CHROMA);
 	}
 	
-	public Interpreter(int wid, int hei, Color alternateChromaColor) {
-		initiate(wid, hei, alternateChromaColor);
+	public Display(int wid, int hei, Color chrom) {
+		initiate(wid, hei, chrom);
 	}
 	
 	private void initiate(int wid, int hei, Color chromaChoice) { 
@@ -92,34 +83,17 @@ public class Interpreter implements JavaReceiver {
 		hp.addRectangle("rect", 3, "default", 0, 0, width, height, false, chroma, chroma);
 		counter = -1;
 		
-		loadFont("../assets/runescape_uf.ttf", "/main/assets/runescape_uf.ttf");
-	}
-	
-//---  Operations   ---------------------------------------------------------------------------
-	
-	private void loadFont(String localPath, String jarPath) {
-		InputStream is = null;
-		try {
-			is = Interpreter.class.getResourceAsStream(localPath);
-			if(is == null) {
-				is = Interpreter.class.getResourceAsStream(jarPath);
-			}
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(Font.createFont(Font.TRUETYPE_FONT, is));
-			usedFont = new Font("RuneScape UF", Font.BOLD, 36);
-			is.close();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			usedFont = DEFAULT_FONT;
-		}
+		loadFont("../control/assets/runescape_uf.ttf", "/control/assets/runescape_uf.ttf");
 	}
 
-	private void interpretNewVoice(String in) {
+//---  Operations   ---------------------------------------------------------------------------
+
+	public void terminateDisplay() {
+		wf.disposeFrame();
+	}
+	
+	@Override
+	public void handleText(String in) {
 		// The commented out code below was used to improve performance by stopping redundant interpretations
 		if(lastText != null && lastText.equals(in) && !lastText.equals("")) {
 			return;
@@ -175,27 +149,30 @@ public class Interpreter implements JavaReceiver {
 			}
 		}
 	}
-
-	@Override
-	public void receiveSocketData(String arg0) {
-		if(arg0.contains("partial") || arg0.contains("text")) {
-			skipCounter++;
-			if(skipCounter % INPUT_SKIP == 0) {
-				String use = cleanInput(arg0);
-				System.out.println("Voice: " + use);
-				interpretNewVoice(use);
+	
+	private void loadFont(String localPath, String jarPath) {
+		InputStream is = null;
+		try {
+			is = Interpreter.class.getResourceAsStream(localPath);
+			if(is == null) {
+				is = Interpreter.class.getResourceAsStream(jarPath);
 			}
 		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(Font.createFont(Font.TRUETYPE_FONT, is));
+			usedFont = new Font("RuneScape UF", Font.BOLD, 36);
+			is.close();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			usedFont = DEFAULT_FONT;
+		}
 	}
-	
+
 //---  Support Methods   ----------------------------------------------------------------------
-	
-	private String cleanInput(String in) {
-		String use = in.substring(in.indexOf("\"") + 1);
-		use = use.substring(use.indexOf("\"") + 1);
-		use = use.substring(use.indexOf("\"") + 1, use.length() - 1);
-		return use;
-	}
 	
 	private void resetText(String in) {
 		text = new ArrayList<String>();
