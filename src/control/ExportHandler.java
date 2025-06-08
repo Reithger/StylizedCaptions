@@ -3,7 +3,7 @@ package control;
 import core.JavaReceiver;
 import core.JavaSender;
 import core.SocketControl;
-import localside.listen.MessageSender;
+import localside.MessageSender;
 
 public class ExportHandler implements JavaReceiver, JavaSender, TextReceiver{
 

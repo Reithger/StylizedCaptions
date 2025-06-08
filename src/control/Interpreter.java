@@ -22,10 +22,13 @@ public class Interpreter implements JavaReceiver {
 
 	private HashMap<String, TextReceiver> receivers;
 	
+	private boolean quiet;
+	
 //---  Constructors   -------------------------------------------------------------------------
 	
-	public Interpreter() {
+	public Interpreter(boolean shh) {
 		receivers = new HashMap<String, TextReceiver>();
+		quiet = shh;
 		
 	}
 
@@ -43,7 +46,8 @@ public class Interpreter implements JavaReceiver {
 	public void receiveSocketData(String arg0) {
 		if(arg0.contains("partial") || arg0.contains("text")) {
 			String use = cleanInput(arg0);
-			System.out.println("Voice: " + use);
+			if(!quiet)
+				System.out.println("Voice: " + use);
 			for(TextReceiver tr : receivers.values()) {
 				tr.handleText(use);
 			}

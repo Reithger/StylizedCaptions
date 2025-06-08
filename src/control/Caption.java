@@ -33,7 +33,9 @@ public class Caption implements JavaTeardown{
 	private SocketControl socket;
 
 	public Caption(String[] args) {
-		interp = new Interpreter();
+		boolean headless = args.length > 1;
+		
+		interp = new Interpreter(headless);
 		socket = new SocketControl();
 		display = new Display(600, 125);
 
@@ -43,7 +45,7 @@ public class Caption implements JavaTeardown{
 		
 		System.out.println(args.length + " " + Arrays.toString(args));
 		
-		if(args.length > 1) {
+		if(headless) {
 			setupExportText(args[0], args[1]);
 		}
 	}
@@ -76,6 +78,8 @@ public class Caption implements JavaTeardown{
 			socket.setInstanceTimeout("send", 10000);
 			
 			socket.attachJavaTeardown("send", this);
+			
+			socket.setInstanceQuiet("send", true);
 			
 			socket.runSocketInstance("send");
 		}
