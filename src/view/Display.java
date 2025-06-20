@@ -2,7 +2,9 @@ package view;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
 import java.io.InputStream;
 import java.util.ArrayList;
 
@@ -23,6 +25,7 @@ import visual.frame.WindowFrame;
 
  * TODO: Native means of transparent background so we don't rely on chroma key options?
  * 
+ * TODO: Migrate font uploading to SVI library
  * 
  */
 
@@ -35,19 +38,35 @@ public class Display implements TextReceiver{
 	private static final Font DEFAULT_FONT = new Font("Sans Serif", Font.BOLD, 28);
 	private static final Color DEFAULT_CHROMA = new Color(0, 255, 0);
 	
+	private static final String JAR_PREFIX = "../control/assets/";
+	private static final String LOCAL_PREFIX = "/control/assets/";
+	
+	
+	private static final String FONT_DARKSOULS = "EBGaramond-Regular.ttf";
+	private static final String FONT_DARKSOULS_BOLD = "EBGaramond-Bold.ttf";
+	private static final String FONT_RUNESCAPE = "runescape_uf.ttf";
+	private static final String FONT_GUMMY = "Orange Gummy.ttf";
+	private static final String FONT_ADORABLE = "Super Adorable.ttf";
+	private static final String FONT_MARIO = "SuperMario256.ttf";
+	private static final String FONT_BUN = "Howdybun.ttf";
+	
+	private static final String[] FONTS = new String[] {FONT_RUNESCAPE, FONT_GUMMY, FONT_ADORABLE, FONT_MARIO, FONT_DARKSOULS, FONT_BUN};
+	
 //---  Instance Variables   -------------------------------------------------------------------
 
 	private int width;
 	private int height;
 	
 	private WindowFrame wf;
-	private HandlePanel hp;
+	private volatile HandlePanel hp;
 	
 	private boolean resetOnNext;
 	private int counter;
 	private int prestige;
 	
 	private Color chroma;
+	
+	private volatile ArrayList<Font> fonts;
 	
 	private volatile ArrayList<String> text;
 	private volatile String lastText;
@@ -67,6 +86,9 @@ public class Display implements TextReceiver{
 	private void initiate(int wid, int hei, Color chromaChoice) { 
 		width = wid;
 		height = hei;
+		fonts = new ArrayList<Font>();
+		fonts.add(DEFAULT_FONT);
+
 		usedFont = DEFAULT_FONT;
 		wf = new WindowFrame(width, height);
 		wf.setName("Ada Captions");
@@ -76,14 +98,41 @@ public class Display implements TextReceiver{
 			private int counter;
 			@Override
 			public void clickReleaseEvent(int code, int x, int y, int type) {
-				usedFont = counter++ % 2 == 0 ? new Font("Sans Serif", Font.BOLD, 28) : new Font("RuneScape UF", Font.BOLD, 36);
+				counter++;
+				Font ref = fonts.get(counter % fonts.size());
+				usedFont = new Font(ref.getName(), ref.getStyle(), ref.getSize());
 			}
 		};
 		wf.addPanel("panel", hp);
 		hp.addRectangle("rect", 3, "default", 0, 0, width, height, false, chroma, chroma);
 		counter = -1;
 		
-		loadFont("../control/assets/runescape_uf.ttf", "/control/assets/runescape_uf.ttf");
+		FontMetrics fm = Toolkit.getDefaultToolkit().getFontMetrics(DEFAULT_FONT);
+		
+		int metricHeight = fm.getHeight();
+		
+		for(String s : FONTS) {
+			String name = loadFont(hp, s);
+			if(name != null && !name.equals("")) {
+				fonts.add(findCorrectSize(name, metricHeight));
+			}
+		}
+		
+		//usedFont = new Font("RuneScape UF", Font.BOLD, 36);
+		usedFont = new Font("EB Garamond", Font.BOLD, 28);
+	}
+	
+	private Font findCorrectSize(String fontName, int relativeSize) {
+		int size = 6;
+		Font start = new Font(fontName, Font.PLAIN, size);
+		Toolkit tk = Toolkit.getDefaultToolkit();
+		FontMetrics fm = tk.getFontMetrics(start);
+		while(fm.getHeight() < relativeSize) {
+			size++;
+			start = new Font(fontName, Font.BOLD, size);
+			fm = tk.getFontMetrics(start);
+		}
+		return start;
 	}
 
 //---  Operations   ---------------------------------------------------------------------------
@@ -150,28 +199,22 @@ public class Display implements TextReceiver{
 		}
 	}
 	
-	private void loadFont(String localPath, String jarPath) {
-		InputStream is = null;
+	private String loadFont(HandlePanel p, String name) {
+		String out;
 		try {
-			is = Interpreter.class.getResourceAsStream(localPath);
-			if(is == null) {
-				is = Interpreter.class.getResourceAsStream(jarPath);
+			out = p.registerFont(JAR_PREFIX + name);
+		}
+		catch(Exception e) {
+			try {
+				out = p.registerFont(LOCAL_PREFIX + name);
+			}
+			catch(Exception e1) {
+				out = "";
 			}
 		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(Font.createFont(Font.TRUETYPE_FONT, is));
-			usedFont = new Font("RuneScape UF", Font.BOLD, 36);
-			is.close();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			usedFont = DEFAULT_FONT;
-		}
+		return out;
 	}
-
+	
 //---  Support Methods   ----------------------------------------------------------------------
 	
 	private void resetText(String in) {
