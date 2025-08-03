@@ -81,6 +81,8 @@ try:
         print("#" * 80)
         print("Press Ctrl+C to stop the recording")
         print("#" * 80)
+        
+        process("Voice Model Loaded and Ready")
 
         rec = KaldiRecognizer(model, samplerate)
         while True:

@@ -50,7 +50,7 @@ public class Display implements TextReceiver{
 	private static final String FONT_MARIO = "SuperMario256.ttf";
 	private static final String FONT_BUN = "Howdybun.ttf";
 	
-	private static final String[] FONTS = new String[] {FONT_RUNESCAPE, FONT_GUMMY, FONT_ADORABLE, FONT_MARIO, FONT_DARKSOULS, FONT_BUN};
+	private static final String[] FONTS = new String[] {FONT_ADORABLE, FONT_RUNESCAPE, FONT_GUMMY, FONT_MARIO, FONT_DARKSOULS, FONT_BUN};
 	
 //---  Instance Variables   -------------------------------------------------------------------
 
@@ -90,8 +90,19 @@ public class Display implements TextReceiver{
 		fonts.add(DEFAULT_FONT);
 
 		usedFont = DEFAULT_FONT;
-		wf = new WindowFrame(width, height);
+		wf = new WindowFrame(width, height) {
+			@Override
+			public void reactToResize() {
+				if(lastText != null) {
+					hp.resize(wf.getWidth(), wf.getHeight());
+					width = wf.getWidth();
+					height = wf.getHeight();
+					handleText(lastText);
+				}
+			}
+		};
 		wf.setName("Ada Captions");
+		wf.setResizable(true);
 		chroma = chromaChoice;
 		wf.setBackgroundColor(chroma);
 		hp = new HandlePanel(0, 0, width, height) {
@@ -101,6 +112,9 @@ public class Display implements TextReceiver{
 				counter++;
 				Font ref = fonts.get(counter % fonts.size());
 				usedFont = new Font(ref.getName(), ref.getStyle(), ref.getSize());
+				if(lastText != null) {
+					Display.this.handleText(lastText);
+				}
 			}
 		};
 		wf.addPanel("panel", hp);
