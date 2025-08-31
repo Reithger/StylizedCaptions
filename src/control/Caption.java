@@ -33,7 +33,7 @@ public class Caption implements JavaTeardown{
 	private SocketControl socket;
 
 	public Caption(String[] args) {
-		boolean headless = args.length > 1;
+		boolean headless = args.length > 0;
 		
 		interp = new Interpreter(headless);
 		socket = new SocketControl();
@@ -46,7 +46,7 @@ public class Caption implements JavaTeardown{
 		System.out.println(args.length + " " + Arrays.toString(args));
 		
 		if(headless) {
-			setupExportText(args[0], args[1]);
+			setupExportText(args[0]);
 		}
 	}
 	
@@ -56,19 +56,15 @@ public class Caption implements JavaTeardown{
 		socket.endSocketInstance("send");
 	}
 	
-	private void setupExportText(String argOne, String argTwo) {
+	private void setupExportText(String argOne) {
 		try {
 			int lPort = Integer.parseInt(argOne);
-			int sPort = Integer.parseInt(argTwo);
-			System.out.println("Port established at: " + lPort + " and: " + sPort);
+			System.out.println("Port established at: " + lPort);
 			
 			
 			socket.createSocketInstance("send");
-			
-			socket.setInstanceListenPort("send", sPort);
-			socket.setInstanceSendPort("send", lPort);
-			
-			export = new ExportHandler(socket, "send");
+
+			export = new ExportHandler(socket, "sender", "send");
 			interp.addTextReceiver("export", export);
 			
 			socket.attachJavaSender("send", export);
@@ -81,7 +77,13 @@ public class Caption implements JavaTeardown{
 			
 			socket.setInstanceQuiet("send", true);
 			
-			socket.runSocketInstance("send");
+			socket.runSocketInstance("send");	
+			
+			
+			socket.addInstanceSendPort("send", "sender", lPort);
+			
+			socket.addInstanceSendPortTag("send", "sender", "CAPTION");
+			
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -94,13 +96,20 @@ public class Caption implements JavaTeardown{
 		
 		socket.verifySubprogramReady("./captions", "voice-to-text.py", "../assets/voice-to-text.py", "/control/assets/voice-to-text.py");
 		
-		socket.setInstanceListenPort("text", 3500);
+		socket.setInstanceListenPortRandom("text");
 
 		socket.attachJavaReceiver("text", interp);
 		
 		socket.setInstanceSubprogramPython("text", "./captions/voice-to-text.py");
 
-		socket.runSocketInstance("text");	
+		socket.setInstanceQuiet("text", true);
+
+		try {
+			socket.runSocketInstance("text");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
 	}
 
 	

@@ -1,5 +1,7 @@
 package control;
 
+import java.util.ArrayList;
+
 import core.JavaReceiver;
 import core.JavaSender;
 import core.SocketControl;
@@ -10,11 +12,13 @@ public class ExportHandler implements JavaReceiver, JavaSender, TextReceiver{
 	private MessageSender send;
 	private SocketControl controller;
 	private String terminateName;
+	private String sendSocketTitle;
 	
 	private String lastMessage;
 	
-	public ExportHandler(SocketControl socket, String in) {
+	public ExportHandler(SocketControl socket, String sendSocket, String in) {
 		controller = socket;
+		sendSocketTitle = sendSocket;
 		terminateName = in;
 	}
 	
@@ -22,7 +26,7 @@ public class ExportHandler implements JavaReceiver, JavaSender, TextReceiver{
 	public void handleText(String in) {
 		if(send != null && !in.equals(lastMessage)) {
 			try {
-				send.sendMessage(in);
+				send.sendMessage(sendSocketTitle, in);
 				lastMessage = in;
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -30,7 +34,7 @@ public class ExportHandler implements JavaReceiver, JavaSender, TextReceiver{
 			}
 		}
 		else if(send == null){
-			System.err.println("Sender is null and cannot send message: " + in);
+			System.err.println("Sender is null and cannot send message: " + in + " via Sender: " + sendSocketTitle);
 		}
 	}
 
@@ -40,7 +44,7 @@ public class ExportHandler implements JavaReceiver, JavaSender, TextReceiver{
 	}
 
 	@Override
-	public void receiveSocketData(String socketData) {
+	public void receiveSocketData(String socketData, ArrayList<String> tags) {
 		if(socketData.toLowerCase().equals("end")) {
 			controller.endSocketInstance(terminateName);
 		}

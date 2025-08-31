@@ -1,5 +1,6 @@
 package control;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import core.JavaReceiver;
@@ -43,8 +44,8 @@ public class Interpreter implements JavaReceiver {
 	}
 	
 	@Override
-	public void receiveSocketData(String arg0) {
-		if(arg0.contains("partial") || arg0.contains("text")) {
+	public void receiveSocketData(String arg0, ArrayList<String> tags) {
+		if(tags.contains("VTT") && (arg0.contains("partial") || arg0.contains("text"))) {
 			String use = cleanInput(arg0);
 			if(!quiet)
 				System.out.println("Voice: " + use);
